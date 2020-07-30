@@ -12,21 +12,29 @@
 */
 
 use App\Question;
+use App\Answer;
 use Illuminate\Http\Request;
 
 Route::group(['middleware' => ['web']], function () {
-    /*
-     * Show Question Dashboard
-     */
+    /*****************************************
+     *
+     *  This all should go in controllers.....
+     *
+     *****************************************/
+
     Route::get('/', function () {
+        $random_placeholders = [
+            'At what time do ducks wake up? ',
+            'What do you call a duck that steals? ',
+            'What did the duck detective say to his partner? ',
+        ];
+
         return view('questions', [
-            'questions' => Question::orderBy('created_at', 'asc')->get(),
+            'questions' => Question::orderBy('created_at', 'desc')->get(),
+            'random_placeholder' => $random_placeholders[array_rand($random_placeholders)],
         ]);
     });
 
-    /*
-     * Add New Question
-     */
     Route::post('/question', function (Request $request) {
         $validator = Validator::make($request->all(), [
             'text' => 'required|max:255|ends_with:?',
@@ -46,4 +54,30 @@ Route::group(['middleware' => ['web']], function () {
 
         return redirect('/');
     });
+
+    Route::get('/question/{id}', function ($id) {
+        return view('question', [
+            'question' => Question::find($id),
+            'answers' => Question::find($id)->answers,
+        ]);
+    })->name('get.question');
+
+    Route::post('/question/{question_id}/answer', function (Request $request) {
+        $validator = Validator::make($request->all(), [
+            'text' => 'required|min:5',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors($validator);
+        }
+
+        $answer = new Answer();
+        $answer->text = $request->text;
+        $answer->question_id = $request->question_id;
+        $answer->save();
+
+        return redirect()->back();
+    })->name('post.answer');
 });
