@@ -11,25 +11,27 @@
 |
 */
 
-use App\Task;
+use App\Question;
 use Illuminate\Http\Request;
 
 Route::group(['middleware' => ['web']], function () {
-    /**
-     * Show Task Dashboard
+    /*
+     * Show Question Dashboard
      */
     Route::get('/', function () {
-        return view('tasks', [
-            'tasks' => Task::orderBy('created_at', 'asc')->get()
+        return view('questions', [
+            'questions' => Question::orderBy('created_at', 'asc')->get(),
         ]);
     });
 
-    /**
-     * Add New Task
+    /*
+     * Add New Question
      */
-    Route::post('/task', function (Request $request) {
+    Route::post('/question', function (Request $request) {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|max:255',
+            'text' => 'required|max:255|ends_with:?',
+        ], [
+            'ends_with' => 'A question is required to end with a question mark ',
         ]);
 
         if ($validator->fails()) {
@@ -38,18 +40,9 @@ Route::group(['middleware' => ['web']], function () {
                 ->withErrors($validator);
         }
 
-        $task = new Task;
-        $task->name = $request->name;
-        $task->save();
-
-        return redirect('/');
-    });
-
-    /**
-     * Delete Task
-     */
-    Route::delete('/task/{id}', function ($id) {
-        Task::findOrFail($id)->delete();
+        $question = new Question();
+        $question->text = $request->text;
+        $question->save();
 
         return redirect('/');
     });
